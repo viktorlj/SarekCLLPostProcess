@@ -29,12 +29,11 @@ git clone https://github.com/seandavi/SDST.git
 cd SDST
 python setup.py install
 
-#Install Python 3.5 and some fixes
+# install Python 3.6.3 and some fixes. NB - Python 3.6.3 globaled from here on and down
 cd /build
 apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
 libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
 xz-utils tk-dev libffi-dev
-
 curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
