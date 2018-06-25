@@ -44,6 +44,7 @@ process filterVCF {
     --variant ${vcf.baseName}.pass.vcf \
     --mask ${lcrFilter} \
     -R ${genomeFile} \
+    --maskName LCRfiltered \
     -o ${vcf.baseName}.lcrfiltered.vcf
 
     java -Xmx4g \
@@ -52,6 +53,7 @@ process filterVCF {
     --variant ${vcf.baseName}.lcrfiltered.vcf \
     --mask ${igFilter} \
     -R ${genomeFile} \
+    --maskName IGRegion \
     -o ${vcf.baseName}.filtered.vcf
     """
 
@@ -60,7 +62,7 @@ process filterVCF {
 process siftAddCosmic {
     tag {vcf}
 
-    publishDir "${directoryMap.CosmicVCF}/${vcf.baseName}.cosmic.ann.vcf", mode: 'link'
+    publishDir directoryMap.CosmicVCF, mode: 'link'
 
     input:
        file(vcf) from filteredvcf
@@ -75,12 +77,12 @@ process siftAddCosmic {
     script:
     """
     java -Xmx4g \
-	-jar \$SNPEFF_HOME/SnpSift.jar \
-	annotate \
-	-info CNT \
+	  -jar \$SNPEFF_HOME/SnpSift.jar \
+	  annotate \
+	  -info CNT \
     ${cosmic} \
-	${vcf} \
-	> ${vcf.baseName}.cosmic.ann.vcf
+	  ${vcf} \
+	  > ${vcf.baseName}.cosmic.ann.vcf
     """
 
 }
@@ -88,20 +90,25 @@ process siftAddCosmic {
 process finishVCF {
     tag {vcf}
 
-    //publishDir "${directoryMap.txtAnnotate}/${sampleID}.anno.txt", mode: 'link'
+    publishDir directoryMap.txtAnnotate, mode: 'link'
 
     input:
         file(vcf) from filteredcosmicvcf
         val(sampleID) from Channel.value(sampleID)
 
     output:
-        file("${sampleID}.anno.txt") into finishedFile
+        file("${vcf.baseName}.anno.done.txt") into finishedFile
 
     script:
     """
     seqtool vcf strelka -f ${vcf} -o ${vcf.baseName}.strelkaadjusted.vcf
     seqtool vcf melt -f ${vcf.baseName}.strelkaadjusted.vcf -o ${vcf.baseName}.melt.txt -s ${sampleID} --includeHeader
-    strelka2pandas.py -i ${vcf.baseName}.melt.txt -o ${sampleID}.anno.txt
+    pyenv global 3.6.3
+    eval "\$(pyenv init -)"
+    strelka2pandas.py -i ${vcf.baseName}.melt.txt -o ${vcf.baseName}.anno.txt
+
+    grep -E -v 'LCRfiltered|IGRegion' ${vcf.baseName}.anno.txt > ${vcf.baseName}.anno.done.txt
+
     """ 
 
 }
@@ -125,7 +132,7 @@ def defineDirectoryMap() {
     'vep_processed'    : "${params.outDir}/Annotation/Readable",
     'vep'              : "${params.outDir}/Annotation/VEP",
     'CosmicVCF'        : "${params.outDir}/Annotation/CosmicVCF",
-    'txtAnnotate'        : "${params.outDir}/Annotation/AnnotatedTxt"
+    'txtAnnotate'      : "${params.outDir}/Annotation/AnnotatedTxt"
   ]
 }
 
@@ -140,8 +147,10 @@ def defineReferenceMap() {
     'genomeIndex'      : checkParamReturnFile("genomeIndex"),
     // lcr filter file
     'lcrFilter'         : checkParamReturnFile("lcrFilter"),
+    'lcrIndex'         : checkParamReturnFile("lcrIndex"),
     // lcr filter file
     'igFilter'         : checkParamReturnFile("igFilter"),
+    'igIndex'         : checkParamReturnFile("igIndex"),
     // cosmic VCF with VCF4.1 header
     'cosmic'           : checkParamReturnFile("cosmic"),
     'cosmicIndex'      : checkParamReturnFile("cosmicIndex"),

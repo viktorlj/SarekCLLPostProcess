@@ -9,7 +9,8 @@ LABEL \
 ENV \
 GATK_HOME=/usr \
 SNPEFF_VERSION=4_3r \
-SNPEFF_HOME=/opt/snpEff
+SNPEFF_HOME=/opt/snpEff \
+PATH="/root/.pyenv/bin:${PATH}"
 
 # Build container
 ADD \

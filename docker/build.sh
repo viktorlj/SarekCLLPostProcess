@@ -14,29 +14,8 @@ apt-get update && apt-get install -y --no-install-recommends \
   python3-pandas \
   python-numpy
 
-  pip3 install click
-
 # Install tools
 mkdir /build
-
-#Install python 3.6
-cd /build
-wget https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tgz
-tar xvf Python-3.6.3.tgz
-cd Python-3.6.3
-./configure --enable-optimizations --with-ensurepip=install
-make -j8
-make altinstall
-
-# install htslib - required by seqtool
-cd /build
-wget --quiet -O htslib-1.8.tar.bz2 \
-https://github.com/samtools/htslib/releases/download/1.8/htslib-1.8.tar.bz2
-tar xfj htslib-1.8.tar.bz2
-cd htslib-1.8
-./configure
-make
-make install
 
 # install PyVCF - required by seqtool
 cd /build
@@ -49,6 +28,20 @@ cd /build
 git clone https://github.com/seandavi/SDST.git
 cd SDST
 python setup.py install
+
+#Install Python 3.5 and some fixes
+cd /build
+apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
+libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+xz-utils tk-dev libffi-dev
+
+curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+pyenv install 3.6.3
+pyenv global 3.6.3
+pip install click
+pip install pandas
 
 # install snpSift
 cd /build
