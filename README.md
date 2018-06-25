@@ -1,5 +1,5 @@
-## Sarek Annotate
-Nextflow workflow to annotate StrelkaBP results from Sarek.
+## Sarek CLL Postprocess
+Nextflow workflow to postprocess StrelkaBP results annotated with VEP from Sarek.
 
 Filters for LCR and IG regions and breaks into readable tsv file.
 

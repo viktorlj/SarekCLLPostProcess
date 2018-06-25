@@ -1,6 +1,5 @@
 #!/usr/bin/env nextflow
 
-
 /*
 ================================================================================
 =                           C O N F I G U R A T I O N                          =
@@ -23,7 +22,6 @@ vcfToAnnotate = Channel.fromPath("${directoryMap.vep}/*.vcf")
 ================================================================================
 */
 
-// lcrIndex and igIndex are not included for some reason, takes some extra time to create new tribble indexes every run
 process filterVCF {
     tag {vcf}
 
@@ -113,9 +111,6 @@ process finishVCF {
 
 }
 
-
-
-
 /*
 ================================================================================
 =                            F U N C T I O N S                                 =
@@ -170,8 +165,6 @@ def minimalInformationMessage() {
   log.info "Work Dir    : " + workflow.workDir
   log.info "Out Dir     : " + params.outDir
 }
-
-
 
 def startMessage() {
   // Display start message
