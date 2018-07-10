@@ -15,3 +15,8 @@ Based on [Sareks annotation workflow](https://github.com/SciLifeLab/Sarek/)
 ```bash
 nextflow run postprocess.nf --outDir results --sampleID Sample_ID
 ```
+
+### ToDo
+Create profiles for what ANN columns to output in final file and attach name to them.
+E.g. CLL, minimal, maximal, custom
+Attach final column name with  column
