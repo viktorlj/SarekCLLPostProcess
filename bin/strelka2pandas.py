@@ -45,10 +45,9 @@ def expandandextract(df, csq):
     csqextracted.columns = csq
     alldata = pd.concat([expandedcsq, csqextracted], axis=1)
     alldataselect = alldata[['SampleName', 'CHROM', 'POS', 'REF', 'ALT', 'SYMBOL', 'Consequence', 'BIOTYPE', 'VARIANT_CLASS', 'Feature_type', 'IMPACT', 'FLAGS',
-                             'NORMALT', 'NORMREF', 'TUMALT', 'TUMREF', 'TUMVAF', 'TUMVARFRACTION', 'Existing_variation', 'EUR_AF', 'gnomAD_NFE_AF', 'MAX_AF', 'ID', 'CNT', 'FILTER']]
-    alldatarenamed = alldataselect.rename(columns={'SampleName': 'SAMPLE', 'Consequence': 'CONSEQUENCE', 'Feature_type': 'FEATURE_TYPE', 'NORMALT': 'ALT_READS_NORMAL', 'NORMREF': 'REF_READS_NORMAL', 'TUMALT': 'ALT_READS_TUMOR', 'TUMREF': 'REF_READS_TUMOR', 'TUMVAF': 'VARIANT_ALLELE_RATIO'})
-    return alldataselect
-
+                             'NORMALT', 'NORMREF', 'TUMALT', 'TUMREF', 'TUMVAF', 'TUMVARFRACTION', 'Existing_variation', 'EUR_AF', 'gnomAD_NFE_AF', 'MAX_AF', 'ID', 'CNT', 'FILTER', 'cDNA_position', 'CDS_position', 'Protein_position', 'Amino_acids', 'Codons']]
+    alldatarenamed = alldataselect.rename(columns={'SampleName': 'SAMPLE', 'Consequence': 'CONSEQUENCE', 'Feature_type': 'FEATURE_TYPE', 'NORMALT': 'ALT_READS_NORMAL', 'NORMREF': 'REF_READS_NORMAL', 'TUMALT': 'ALT_READS_TUMOR', 'TUMREF': 'REF_READS_TUMOR', 'TUMVAF': 'VARIANT_ALLELE_RATIO', 'ID': 'COSMIC_IDs', 'CNT': 'COSMIC_CASES'})
+    return alldatarenamed
 
 @click.command()
 @click.option(

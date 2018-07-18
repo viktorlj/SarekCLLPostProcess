@@ -22,7 +22,7 @@ vcfToAnnotate = Channel.fromPath("${directoryMap.vep}/*.vcf")
 ================================================================================
 */
 
-process filterVCF {
+process LCRfilterVCF {
     tag {vcf}
 
     input:
@@ -30,7 +30,7 @@ process filterVCF {
        set file(genomeFile), file(genomeIndex), file(genomeDict), file(lcrFilter), file(lcrIndex), file(igFilter), file(igIndex) from Channel.value([referenceMap.genomeFile, referenceMap.genomeIndex, referenceMap.genomeDict, referenceMap.lcrFilter, referenceMap.lcrIndex, referenceMap.igFilter, referenceMap.igIndex])
 
     output:
-      file("${vcf.baseName}.filtered.vcf") into filteredvcf
+      file("${vcf.baseName}.lcrfiltered.vcf") into lcrfilteredvcf
         
     script:
     """
@@ -44,7 +44,26 @@ process filterVCF {
     -R ${genomeFile} \
     --maskName LCRfiltered \
     -o ${vcf.baseName}.lcrfiltered.vcf
+    """
 
+}
+
+/*
+
+// Not working for several samples. Disabling for now.
+
+process IGfilterVCF {
+    tag {vcf}
+
+    input:
+       set file(vcf), file(idx) from lcrfilteredvcf
+       set file(genomeFile), file(genomeIndex), file(genomeDict), file(lcrFilter), file(lcrIndex), file(igFilter), file(igIndex) from Channel.value([referenceMap.genomeFile, referenceMap.genomeIndex, referenceMap.genomeDict, referenceMap.lcrFilter, referenceMap.lcrIndex, referenceMap.igFilter, referenceMap.igIndex])
+
+    output:
+      file("${vcf.baseName}.filtered.vcf") into filteredvcf
+        
+    script:
+    """
     java -Xmx4g \
     -jar \$GATK_HOME/GenomeAnalysisTK.jar \
     -T VariantFiltration \
@@ -56,14 +75,13 @@ process filterVCF {
     """
 
 }
+*/
 
 process siftAddCosmic {
     tag {vcf}
 
-    publishDir directoryMap.CosmicVCF, mode: 'link'
-
     input:
-       file(vcf) from filteredvcf
+       file(vcf) from lcrfilteredvcf
        set file(cosmic), file(cosmicIndex) from Channel.value([
        referenceMap.cosmic,
        referenceMap.cosmicIndex,
@@ -88,7 +106,7 @@ process siftAddCosmic {
 process finishVCF {
     tag {vcf}
 
-    publishDir directoryMap.txtAnnotate, mode: 'link'
+    publishDir directoryMap.txtAnnotate, mode: 'link', pattern: '*.txt'
 
     input:
         file(vcf) from filteredcosmicvcf
@@ -96,11 +114,20 @@ process finishVCF {
 
     output:
         file("${vcf.baseName}.anno.done.txt") into finishedFile
+        file("${vcf.baseName}.ADfiltered.vcf") into finishedVCFFile
 
     script:
     """
     seqtool vcf strelka -f ${vcf} -o ${vcf.baseName}.strelkaadjusted.vcf
-    seqtool vcf melt -f ${vcf.baseName}.strelkaadjusted.vcf -o ${vcf.baseName}.melt.txt -s ${sampleID} --includeHeader
+
+    java -Xmx4g \
+	  -jar \$SNPEFF_HOME/SnpSift.jar \
+	  filter "( TUMVAF >= 0.1 ) & ( TUMALT > 4 )" \
+	  -f ${vcf.baseName}.strelkaadjusted.vcf \
+	  > ${vcf.baseName}.ADfiltered.vcf
+
+    seqtool vcf melt -f ${vcf.baseName}.ADfiltered.vcf -o ${vcf.baseName}.melt.txt -s ${vcf.baseName} --includeHeader
+
     pyenv global 3.6.3
     eval "\$(pyenv init -)"
     strelka2pandas.py -i ${vcf.baseName}.melt.txt -o ${vcf.baseName}.anno.txt
@@ -108,6 +135,24 @@ process finishVCF {
     grep -E -v 'LCRfiltered|IGRegion' ${vcf.baseName}.anno.txt > ${vcf.baseName}.anno.done.txt
 
     """ 
+
+}
+
+process publishVCF{
+  tag {vcf}
+
+  publishDir directoryMap.finishedVCF, mode: 'link'
+
+  input:
+    file(vcf) from finishedVCFFile
+
+  output:
+    file("${vcf.baseName}.finished.vcf") into publishedVCF
+
+  script:
+  """
+  cat ${vcf} > ${vcf.baseName}.finished.vcf
+  """
 
 }
 
@@ -126,7 +171,7 @@ def defineDirectoryMap() {
   return [
     'vep_processed'    : "${params.outDir}/Annotation/Readable",
     'vep'              : "${params.outDir}/Annotation/VEP",
-    'CosmicVCF'        : "${params.outDir}/Annotation/CosmicVCF",
+    'finishedVCF'      : "${params.outDir}/Annotation/finishedVCF",
     'txtAnnotate'      : "${params.outDir}/Annotation/AnnotatedTxt"
   ]
 }
